@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/xuri/excelize/v2"
 )
 
 func UploadHandler(c *gin.Context) {
@@ -37,8 +38,26 @@ func UploadHandler(c *gin.Context) {
 		return
 	}
 
+	f, err := excelize.OpenFile(savePath)
+	if err!= nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to open Excel file",
+		})
+		return
+	}
+	defer f.Close()
+
+	sheetName := f.GetSheetName(0)
+	rows, err := f.GetRows(sheetName)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to read rows",
+		})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"message":  "File uploaded successfully",
-		"filepath": savePath,
+		"rows": rows,
 	})
 }
